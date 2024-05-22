@@ -71,18 +71,31 @@ class Crosswords:
     
     def get_nth_horizontal_indexes(self, n):
         '''
-        return the i, j tuple representing the start of nth horizontal word
+        return the i, j tuple representing the start of nth horizontal word (start counting from 1)
         '''
+        curr_n = 0
+        for i, j in self.numbers_list:
+            if self[i, j].horizontal_length > 0:
+                curr_n += 1
+            if n == curr_n:
+                return (i, j)
        
     def get_nth_vertical_indexes(self, n):
         '''
-        return the i, j tuple representing the start of nth vertical word
+        return the i, j tuple representing the start of nth vertical word (start counting from 1)
         '''
+        curr_n = 0
+        for i, j in self.numbers_list:
+            if self[i, j].vertical_length > 0:
+                curr_n += 1
+            if n == curr_n:
+                return (i, j)
     
     def set_nth_horizontal_indexes(self, n, word):
         '''
         set the word starting to nth horizontal position
         '''
+       
     
     def set_nth_vertical_indexes(self, n, word):
         '''
@@ -121,7 +134,6 @@ class Crosswords:
         '''
         set horizontal word who started at i, j
         '''
-        word = ''
         for jj in range(j, j + self[i, j].horizontal_length):
            self[i, jj].value = word[jj - j]
     
@@ -129,7 +141,6 @@ class Crosswords:
         '''
         set horizontal word who started at i, j
         '''
-        word = ''
         for ii in range(i, i + self[i, i].vertical_length):
             self[ii, j].value = word[ii - i]
         return word
@@ -171,5 +182,6 @@ class Crosswords:
     
 if __name__ == "__main__":
     crossword = Crosswords(8, 5, [(4, 0), (3, 1), (2, 2), (1, 3), (0, 4)])
+    crossword.set_horizontal_word(0, 0, 'ciao')
     print(crossword)
     print(crossword.__str__(numbers=True))
