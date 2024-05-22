@@ -28,7 +28,9 @@ class Crosswords:
                 value = ' '
                 is_black = (i, j) in self.black_indexes
                 is_horizontal_number = (j == 0 or row[j-1].is_black) and not is_black
+                is_horizontal_number = is_horizontal_number and not (j + 1 == self.width or (i, j + 1) in self.black_indexes)
                 is_vertical_number = (i == 0 or self[-1, j].is_black) and not is_black
+                is_vertical_number = is_vertical_number and not (j + 1 == self.width or (i, j + 1) in self.black_indexes)
                 horizontal_length = 0
                 if is_horizontal_number:
                     for jj in range(j, self.width):
