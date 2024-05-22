@@ -141,6 +141,14 @@ class Crosswords:
         for ii in range(i, i + self[i, i].vertical_length):
             self[ii, j].value = word[ii - i]
         return word
+    
+    def del_horizontal_word(self, i, j):
+        word = ' ' * self[i, j].horizontal_length
+        self.set_horizontal_word(i, j, word)
+       
+    def del_vertical_word(self, i, j):
+        word = ' ' * self[i, j].vertical_length
+        self.set_vertical_word(i, j, word)
        
     def is_completed_horizontal_word(self, i, j):
         '''
