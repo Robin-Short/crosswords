@@ -78,7 +78,7 @@ class Crosswords:
             if self[i, j].horizontal_length > 0:
                 curr_n += 1
             if n == curr_n:
-                return (i, j)
+                return i, j
        
     def get_nth_vertical_indexes(self, n):
         '''
@@ -89,18 +89,7 @@ class Crosswords:
             if self[i, j].vertical_length > 0:
                 curr_n += 1
             if n == curr_n:
-                return (i, j)
-    
-    def set_nth_horizontal_indexes(self, n, word):
-        '''
-        set the word starting to nth horizontal position
-        '''
-       
-    
-    def set_nth_vertical_indexes(self, n, word):
-        '''
-        set the word starting to nth vertical position
-        '''
+                return i, j
     
     def get_horizontal_word(self, i, j):
         '''
@@ -124,11 +113,19 @@ class Crosswords:
         '''
         return the list of adjacency cells horizontally of word started at i, j if self[i, j].horizontal_number else None
         '''
+        cells = list()
+        for jj in range(j, j + self[i, j].vertical_length):
+            cells += self[i, jj]
+        return cells
     
     def get_vertical_cells(self, i, j):
         '''
         return the list of adjacency cells vertically of word started at i, j if self[i, j].horizontal_number else None
         '''
+        cells = list()
+        for ii in range(i, i + self[i, j].vertical_length):
+            cells += self[ii, j]
+        return cells
     
     def set_horizontal_word(self, i, j, word):
         '''
@@ -154,7 +151,6 @@ class Crosswords:
                 return False
         return True
         
-       
     def is_completed_vertical_word(self, i, j):
         '''
         return if vertical word started at i, j is completed or not
@@ -171,17 +167,27 @@ class Crosswords:
                     return False
         return True
         
-    def loss_horizontal(self):
-        pass
+    def loss_horizontal(self, dictionary):
+        loss = 0
+        for (i, j) in self.numbers_list:
+            word = self.get_horizontal_word(i, j)
+            if self[i, j].horizontal_length > 0 and not word in dictionary:
+                loss += 1
+        return loss
     
-    def loss_vertical(self):
-        pass
+    def loss_vertical(self, dictionary):
+        loss = 0
+        for (i, j) in self.numbers_list:
+            word = self.get_vertical_word(i, j)
+            if self[i, j].vertical_length > 0 and not word in dictionary:
+                loss += 1
+        return loss
     
-    def loss(self):
-        pass
+    def loss(self, dictionary):
+        return self.loss_horizontal(dictionary) + self.loss_vertical(dictionary)
     
 if __name__ == "__main__":
     crossword = Crosswords(8, 5, [(4, 0), (3, 1), (2, 2), (1, 3), (0, 4)])
-    crossword.set_horizontal_word(0, 0, 'ciao')
+    crossword.set_horizontal_word(0, 0, 'CIAO')
     print(crossword)
     print(crossword.__str__(numbers=True))
