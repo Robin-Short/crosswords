@@ -108,7 +108,7 @@ class Crosswords:
         return the stringe composed by adjacency cells vertically of word started at i, j if self[i, j].horizontal_number else None
         '''
         word = ''
-        for ii in range(i, i + self[i, i].vertical_length):
+        for ii in range(i, i + self[i, j].vertical_length):
             word += self[ii, j].value
         return word
     
@@ -141,7 +141,7 @@ class Crosswords:
         '''
         set horizontal word who started at i, j
         '''
-        for ii in range(i, i + self[i, i].vertical_length):
+        for ii in range(i, i + self[i, j].vertical_length):
             self[ii, j].value = word[ii - i]
         return word
     
