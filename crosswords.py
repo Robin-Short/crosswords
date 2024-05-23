@@ -1,4 +1,7 @@
 import numpy as np
+from random import randint
+
+chars = 'ABCDEFGHIJKLMNOPRSTUVWXYZ'
 
 class Cell:
     def __init__(self, value: str, is_black: bool, number, horizontal_length: int, vertical_length: int):
@@ -167,7 +170,13 @@ class Crosswords:
             if self[ii, j].value == ' ' and not self[i, j].is_black:
                 return False
         return True
-       
+    
+    def fill_random(self):
+       for i in range(self.height):
+           for j in range(self.width):
+               if self[i, j].value == ' ' and not self[i, j].is_black:
+                   self[i, j].value = chars[randint(0, len(chars) - 1)]
+           
     def is_filled(self):
         for i in range(self.height):
             for j in range(self.width):
@@ -199,3 +208,7 @@ if __name__ == "__main__":
     crossword.set_horizontal_word(0, 0, 'CIAO')
     print(crossword)
     print(crossword.__str__(numbers=True))
+    crossword.fill_random()
+    print(crossword)
+    print(crossword.__str__(numbers=True))
+    
