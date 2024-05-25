@@ -5,7 +5,7 @@ from dictionary import dictionary
 
 HORIZONTAL = 0
 VERTICAL = 1
-EPOCHS = 10000
+EPOCHS = 1000
 
 def word_distance(word1, word2):
     if len(word1) != len(word2):
@@ -102,7 +102,7 @@ class Generator:
         return self.losses
 
 if __name__ == "__main__":
-    crossword = Crosswords(14, 10, [(4, 0), (3, 1), (2, 2), (1, 3), (0, 4)])
+    crossword = Crosswords(14, 10, [(4, 0), (3, 1), (2, 2), (1, 3), (0, 4), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)])
     generator = Generator(crossword, dictionary)
     losses = generator.train()
     plt.plot(losses)

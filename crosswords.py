@@ -13,8 +13,8 @@ class Cell:
         self.params = dict()
        
     def __str__(self, number=False):
-        txt = (" " + self.value if not number else (str(self.number) if self.number else "")) \
-            if not self.is_black else ' #'
+        txt = (" " + (self.value if not number else (str(self.number)) if self.number else "_")) \
+            if not self.is_black else '  '
         txt += " " * (3 - len(txt))
         return txt
         
@@ -32,8 +32,8 @@ class Crosswords:
                 is_black = (i, j) in self.black_indexes
                 is_horizontal_number = (j == 0 or row[j-1].is_black) and not is_black
                 is_horizontal_number = is_horizontal_number and not (j + 1 == self.width or (i, j + 1) in self.black_indexes)
-                is_vertical_number = (i == 0 or self[-1, j].is_black) and not is_black
-                is_vertical_number = is_vertical_number and not (j + 1 == self.width or (i, j + 1) in self.black_indexes)
+                is_vertical_number = (i == 0 or self[i-1, j].is_black) and not is_black
+                is_vertical_number = is_vertical_number and not (i + 1 == self.height or (i + 1, j) in self.black_indexes)
                 horizontal_length = 0
                 if is_horizontal_number:
                     for jj in range(j, self.width):
@@ -67,7 +67,7 @@ class Crosswords:
             txt += '\n' + '*---' * self.width + '*\n|'
             for j in range(self.width):
                 txt += self[i, j].__str__(number=numbers) + '|'
-        return txt + '\n' + ' ---' * self.width
+        return txt + '\n' + '*---' * self.width + '*\n'
     
     def get_cell(self, i, j):
         return self[i, j]
@@ -204,7 +204,7 @@ class Crosswords:
         return self.loss_horizontal(dictionary) + self.loss_vertical(dictionary)
     
 if __name__ == "__main__":
-    crossword = Crosswords(8, 5, [(4, 0), (3, 1), (2, 2), (1, 3), (0, 4)])
+    crossword = Crosswords(5, 5, [(4, 0), (3, 1), (2, 2), (1, 3), (0, 4)])
     crossword.set_horizontal_word(0, 0, 'CIAO')
     print(crossword)
     print(crossword.__str__(numbers=True))
