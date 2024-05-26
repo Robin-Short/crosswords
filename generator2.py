@@ -54,7 +54,7 @@ class Generator:
                 res[n] = [word]
         return res
              
-    def sort_words(self, words, i, j, DIR, desc=False):
+    def sort_words(self, words, i, j, DIR, desc=True):
         pattern = self.crossword.get_word(i, j, DIR)
         scores = dict()
         for word in words:
@@ -78,13 +78,9 @@ class Generator:
             scores[word] = score
             self.crossword.set_word(i, j, DIR, pattern)
         words.sort(key=lambda w: scores[w], reverse=True)
-        '''for i in range(len(words) - 1, 0, -1):
-            if scores[words[i]] == 0:
-                words.pop()
-            else:
-                break'''
         if not desc:
             words.reverse()
+        return scores
 
     def visit(self):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS
@@ -123,22 +119,39 @@ class Generator:
             i, j, DIR = min_move
             partial_word = self.crossword.get_word(i, j, DIR)
             self.moves.remove(min_move)
-            self.sort_words(possible_words, i, j, DIR)
+            scores = self.sort_words(possible_words, i, j, DIR)
             for word in possible_words:
-                if DIR == HORIZONTAL:
-                    self.crossword.set_horizontal_word(i, j, word)
-                elif DIR == VERTICAL:
-                    self.crossword.set_vertical_word(i, j, word)
-                solution = self.visit()
-                if solution:
-                    return True
+                if scores[word]:    # Score Boosting
+                    if DIR == HORIZONTAL:
+                        self.crossword.set_horizontal_word(i, j, word)
+                    elif DIR == VERTICAL:
+                        self.crossword.set_vertical_word(i, j, word)
+                    solution = self.visit()
+                    if solution:
+                        return True
+                else:
+                    LEAVES += 1
             self.moves.append(min_move)
             self.crossword.set_word(i, j, DIR, partial_word)
           
         
 if __name__ == "__main__":
-    crossword = Crosswords(7, 7, [(4, 0), (3, 1), (2, 2), (1, 3), (0, 4)])
-    print(crossword)
+    crossword = Crosswords(15, 15,
+                           [(0, 4), (0, 10),
+                            (1, 4), (1, 10),
+                            (3, 3), (3, 7),
+                            (4, 6), (4, 12), (4, 13), (4, 14),
+                            (5, 0), (5, 1), (5, 5), (5, 9),
+                            (6, 4),
+                            (7, 3), (7, 11),
+                            (8, 10),
+                            (9, 5), (9, 9), (9, 13), (9, 14),
+                            (10, 0), (10, 1), (10, 2), (10, 8),
+                            (11, 7), (11, 11),
+                            (13, 4), (13, 10),
+                            (14, 4), (14, 10),
+                            ])
+    print(crossword.__str__(numbers=True))
     generator = Generator(crossword, dictionary)
     start = time()
     generator.visit()
