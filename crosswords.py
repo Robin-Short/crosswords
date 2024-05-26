@@ -1,6 +1,9 @@
 import numpy as np
 from random import randint
+import re
 
+HORIZONTAL = 0
+VERTICAL = 1
 chars = 'ABCDEFGHIJKLMNOPRSTUVWXYZ'
 
 class Cell:
@@ -112,6 +115,9 @@ class Crosswords:
             word += self[ii, j].value
         return word
     
+    def get_word(self, i, j, DIR):
+        return self.get_horizontal_word(i, j) if DIR == HORIZONTAL else self.get_vertical_word(i, j)
+    
     def get_horizontal_cells(self, i, j):
         '''
         return the list of adjacency cells horizontally of word started at i, j if self[i, j].horizontal_number else None
@@ -145,6 +151,12 @@ class Crosswords:
             self[ii, j].value = word[ii - i]
         return word
     
+    def set_word(self, i, j, DIR, word):
+        if DIR == HORIZONTAL:
+            self.set_horizontal_word(i, j, word)
+        elif DIR == VERTICAL:
+            self.set_vertical_word(i, j, word)
+    
     def del_horizontal_word(self, i, j):
         word = ' ' * self[i, j].horizontal_length
         self.set_horizontal_word(i, j, word)
@@ -152,6 +164,37 @@ class Crosswords:
     def del_vertical_word(self, i, j):
         word = ' ' * self[i, j].vertical_length
         self.set_vertical_word(i, j, word)
+        
+    def find_possible_horizontal_words(self, dictionary, i, j, optimize=False):
+        '''
+        if optimize we suppose that dictionary is a structure like this:
+            {
+                1: [wordlist1],
+                2: [wordlist2],
+                :
+            }
+        '''
+        pattern = self.get_horizontal_word(i, j).replace(' ', '.')
+        res = []
+        iterable = dictionary.keys() if not optimize else dictionary[len(pattern)]
+        for word in iterable:
+            if re.fullmatch(pattern, word):
+                res.append(word)
+        return res
+    
+    def find_possible_vertical_words(self, dictionary, i, j):
+        pattern = self.get_vertical_word(i, j).replace(' ', '.')
+        res = []
+        for word in dictionary.keys():
+            if re.fullmatch(pattern, word):
+                res.append(word)
+        return res
+    
+    def find_possible_words(self, dictionary, i, j, DIR):
+        if DIR == HORIZONTAL:
+            return self.find_possible_horizontal_words(dictionary, i, j)
+        elif DIR == VERTICAL:
+            return self.find_possible_vertical_words(dictionary, i, j)
        
     def is_completed_horizontal_word(self, i, j):
         '''
