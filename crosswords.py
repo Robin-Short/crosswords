@@ -6,6 +6,15 @@ HORIZONTAL = 0
 VERTICAL = 1
 chars = 'ABCDEFGHIJKLMNOPRSTUVWXYZ'
 
+class Move:
+    def __init__(self, i, j, DIR):
+        self.i = i
+        self.j = j
+        self.DIR = DIR
+
+    def get_params(self):
+        return self.i, self.j, self.DIR
+
 class Cell:
     def __init__(self, value: str, is_black: bool, number, horizontal_length: int, vertical_length: int):
         self.value = value                          # ['A', 'b', ..., 'Z', ' ']
@@ -28,6 +37,7 @@ class Crosswords:
         self.black_indexes = black_indexes
         self.grid = list()
         self.numbers_list = list()
+        self.moves_list = list()
         for i in range(self.height):
             row = list()
             for j in range(self.width):
@@ -39,6 +49,7 @@ class Crosswords:
                 is_vertical_number = is_vertical_number and not (i + 1 == self.height or (i + 1, j) in self.black_indexes)
                 horizontal_length = 0
                 if is_horizontal_number:
+                    self.moves_list.append(Move(i, j, HORIZONTAL))
                     for jj in range(j, self.width):
                         if not (i, jj) in self.black_indexes:
                             horizontal_length += 1
@@ -46,6 +57,7 @@ class Crosswords:
                             break
                 vertical_length = 0
                 if is_vertical_number:
+                    self.moves_list.append(Move(i, j, VERTICAL))
                     for ii in range(i, self.height):
                         if not (ii, j) in self.black_indexes:
                             vertical_length += 1
@@ -59,6 +71,10 @@ class Crosswords:
                 cell = Cell(value, is_black, number, horizontal_length, vertical_length)
                 row.append(cell)
             self.grid.append(row)
+        self.crosses = dict()
+        for move in self.moves_list:
+            self.crosses[move.get_params()] = self.get_cross_moves(move)
+
     
     def __getitem__(self, item):
         i, j = item
@@ -196,6 +212,44 @@ class Crosswords:
             return self.find_possible_horizontal_words(dictionary, i, j, optimize)
         elif DIR == VERTICAL:
             return self.find_possible_vertical_words(dictionary, i, j, optimize)
+
+    def get_horizontal_cross_moves(self, i, j):
+        positions = [(i, j + jj) for jj in range(self[i, j].horizontal_length)]
+        cross_moves = []
+        for move in self.moves_list:
+            I, J, DIR = move.get_params()
+            ok = False
+            if DIR == VERTICAL:
+                for ii in range(self[I, J].vertical_length):
+                    if (I + ii, J) in positions:
+                        ok = True
+                        break
+                if ok:
+                    cross_moves.append(move)
+        return cross_moves
+
+    def get_vertical_cross_moves(self, i, j):
+        positions = [(i + ii, j) for ii in range(self[i, j].vertical_length)]
+        cross_moves = []
+        for move in self.moves_list:
+            I, J, DIR = move.get_params()
+            ok = False
+            if DIR == HORIZONTAL:
+                for jj in range(self[I, J].horizontal_length):
+                    if (I, J + jj) in positions:
+                        ok = True
+                        break
+                if ok:
+                    cross_moves.append(move)
+        return cross_moves
+
+    def get_cross_moves(self, move):
+        i, j, DIR = move.get_params()
+        if DIR == HORIZONTAL:
+            return self.get_horizontal_cross_moves(i, j)
+        elif DIR == VERTICAL:
+            return self.get_vertical_cross_moves(i, j)
+
        
     def is_completed_horizontal_word(self, i, j):
         '''

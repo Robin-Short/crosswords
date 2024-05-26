@@ -1,5 +1,5 @@
 from random import randint
-from crosswords import Crosswords, HORIZONTAL, VERTICAL
+from crosswords import Move, Crosswords, HORIZONTAL, VERTICAL
 from matplotlib import pyplot as plt
 from dictionary import dictionary
 from time import time
@@ -54,13 +54,38 @@ class Generator:
                 res[n] = [word]
         return res
              
-    def sort_words(self, words, i, j, DIR):
-        #scores = dict()
-        #for word in words:
-        #    pass
-        #words.sort(key=lambda w: scores[w])
-        pass
-       
+    def sort_words(self, words, i, j, DIR, desc=False):
+        pattern = self.crossword.get_word(i, j, DIR)
+        scores = dict()
+        for word in words:
+            self.crossword.set_word(i, j, DIR, word)
+            score = 1
+            cross_moves = [cross_move for cross_move in self.crossword.crosses[(i, j, DIR)]
+                           if cross_move.get_params() in self.moves]
+            for cross_move in cross_moves:
+                little_i, little_j, little_DIR = cross_move.get_params()
+                little_pattern = self.crossword.get_word(little_i, little_j, little_DIR)
+                if little_pattern in self.cache:
+                    little_possible_words = self.cache[little_pattern]
+                else:
+                    little_possible_words = self.crossword.find_possible_words(self.optimized_dictionary,
+                                                                               little_i, little_j, little_DIR,
+                                                                               optimize=True)
+                    self.cache[little_pattern] = little_possible_words
+                score *= len(little_possible_words)
+                if not score:
+                    break
+            scores[word] = score
+            self.crossword.set_word(i, j, DIR, pattern)
+        words.sort(key=lambda w: scores[w], reverse=True)
+        '''for i in range(len(words) - 1, 0, -1):
+            if scores[words[i]] == 0:
+                words.pop()
+            else:
+                break'''
+        if not desc:
+            words.reverse()
+
     def visit(self):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS
         VISITS += 1
