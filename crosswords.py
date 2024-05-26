@@ -182,19 +182,20 @@ class Crosswords:
                 res.append(word)
         return res
     
-    def find_possible_vertical_words(self, dictionary, i, j):
+    def find_possible_vertical_words(self, dictionary, i, j, optimize=False):
         pattern = self.get_vertical_word(i, j).replace(' ', '.')
         res = []
-        for word in dictionary.keys():
+        iterable = dictionary.keys() if not optimize else dictionary[len(pattern)]
+        for word in iterable:
             if re.fullmatch(pattern, word):
                 res.append(word)
         return res
     
-    def find_possible_words(self, dictionary, i, j, DIR):
+    def find_possible_words(self, dictionary, i, j, DIR, optimize=False):
         if DIR == HORIZONTAL:
-            return self.find_possible_horizontal_words(dictionary, i, j)
+            return self.find_possible_horizontal_words(dictionary, i, j, optimize)
         elif DIR == VERTICAL:
-            return self.find_possible_vertical_words(dictionary, i, j)
+            return self.find_possible_vertical_words(dictionary, i, j, optimize)
        
     def is_completed_horizontal_word(self, i, j):
         '''

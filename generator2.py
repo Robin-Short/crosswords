@@ -55,10 +55,11 @@ class Generator:
         return res
              
     def sort_words(self, words, i, j, DIR):
-        scores = dict()
-        for word in words:
-            pass
-        words.sort(key=lambda w: scores[w], reversed=True)
+        #scores = dict()
+        #for word in words:
+        #    pass
+        #words.sort(key=lambda w: scores[w])
+        pass
        
     def visit(self):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS
@@ -81,7 +82,8 @@ class Generator:
                 attempt_possible_words = self.cache[pattern]
                 CACHE_ACCESSES += 1
             else:
-                attempt_possible_words = self.crossword.find_possible_words(dictionary, i, j, DIR)
+                attempt_possible_words = self.crossword.find_possible_words(self.optimized_dictionary, i, j, DIR,
+                                                                            optimize=True)
                 self.cache[pattern] = attempt_possible_words
                 CACHE_WORDS += len(attempt_possible_words)
             scores[move] = len(attempt_possible_words)
