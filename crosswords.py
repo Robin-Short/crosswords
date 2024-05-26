@@ -112,7 +112,7 @@ class Crosswords:
                 curr_n += 1
             if n == curr_n:
                 return i, j
-    
+
     def get_horizontal_word(self, i, j):
         '''
         return the stringe composed by adjacency cells horizontally of word started at i, j if self[i, j].horizontal_number else None
@@ -131,33 +131,16 @@ class Crosswords:
             word += self[ii, j].value
         return word
     
-    def get_word(self, i, j, DIR):
+    def get_word(self, move):
+        i, j, DIR = move.get_params()
         return self.get_horizontal_word(i, j) if DIR == HORIZONTAL else self.get_vertical_word(i, j)
-    
-    def get_horizontal_cells(self, i, j):
-        '''
-        return the list of adjacency cells horizontally of word started at i, j if self[i, j].horizontal_number else None
-        '''
-        cells = list()
-        for jj in range(j, j + self[i, j].vertical_length):
-            cells += self[i, jj]
-        return cells
-    
-    def get_vertical_cells(self, i, j):
-        '''
-        return the list of adjacency cells vertically of word started at i, j if self[i, j].horizontal_number else None
-        '''
-        cells = list()
-        for ii in range(i, i + self[i, j].vertical_length):
-            cells += self[ii, j]
-        return cells
     
     def set_horizontal_word(self, i, j, word):
         '''
         set horizontal word who started at i, j
         '''
         for jj in range(j, j + self[i, j].horizontal_length):
-           self[i, jj].value = word[jj - j]
+            self[i, jj].value = word[jj - j]
     
     def set_vertical_word(self, i, j, word):
         '''
@@ -167,7 +150,8 @@ class Crosswords:
             self[ii, j].value = word[ii - i]
         return word
     
-    def set_word(self, i, j, DIR, word):
+    def set_word(self, move, word):
+        i, j, DIR = move.get_params()
         if DIR == HORIZONTAL:
             self.set_horizontal_word(i, j, word)
         elif DIR == VERTICAL:
@@ -182,14 +166,14 @@ class Crosswords:
         self.set_vertical_word(i, j, word)
         
     def find_possible_horizontal_words(self, dictionary, i, j, optimize=False):
-        '''
+        """
         if optimize we suppose that dictionary is a structure like this:
             {
                 1: [wordlist1],
                 2: [wordlist2],
                 :
             }
-        '''
+        """
         pattern = self.get_horizontal_word(i, j).replace(' ', '.')
         res = []
         iterable = dictionary.keys() if not optimize else dictionary[len(pattern)]
@@ -207,7 +191,8 @@ class Crosswords:
                 res.append(word)
         return res
     
-    def find_possible_words(self, dictionary, i, j, DIR, optimize=False):
+    def find_possible_words(self, dictionary, move, optimize=False):
+        i, j, DIR = move.get_params()
         if DIR == HORIZONTAL:
             return self.find_possible_horizontal_words(dictionary, i, j, optimize)
         elif DIR == VERTICAL:
