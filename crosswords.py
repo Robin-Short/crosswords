@@ -17,7 +17,7 @@ class Move:
 
 class Cell:
     def __init__(self, value: str, is_black: bool, number, horizontal_length: int, vertical_length: int):
-        self.value = value                          # ['A', 'b', ..., 'Z', ' ']
+        self.value = value                          # ['A', 'B', ..., 'Z', '.']
         self.is_black = is_black                    # [True, False]
         self.number = number                        # [0, 1, 2, 3, ...]
         self.horizontal_length = horizontal_length  # [0, 1, 2, 3, ...]
@@ -41,7 +41,7 @@ class Crosswords:
         for i in range(self.height):
             row = list()
             for j in range(self.width):
-                value = ' '
+                value = '.'
                 is_black = (i, j) in self.black_indexes
                 is_horizontal_number = (j == 0 or row[j-1].is_black) and not is_black
                 is_horizontal_number = is_horizontal_number and not (j + 1 == self.width or (i, j + 1) in self.black_indexes)

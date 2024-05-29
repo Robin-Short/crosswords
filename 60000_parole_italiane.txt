@@ -3467,7 +3467,7 @@ altipiano
 alto
 altra
 altre
-altresi'
+altresi
 altrettante
 altri
 altrimenti
@@ -12605,7 +12605,7 @@ coscienti
 coscienza
 cose
 cosi
-cosi'
+cosi
 cosiddetto
 cosituite
 cosmetica
@@ -15124,7 +15124,7 @@ devozione
 dfgdfgdfgdfgdfgd
 dfgdgdfgdfgdfg
 di
-di'
+di
 dia
 diabete
 diabolica

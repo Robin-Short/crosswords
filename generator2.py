@@ -1,4 +1,4 @@
-from random import randint
+from random import shuffle
 from crosswords import Move, Crosswords, HORIZONTAL, VERTICAL
 from matplotlib import pyplot as plt
 from dictionary import dictionary
@@ -53,34 +53,6 @@ class Generator:
             else:
                 res[n] = [word]
         return res
-             
-    def sort_words(self, words, move, desc=False):
-        i, j, DIR = move.get_params()
-        pattern = self.crossword.get_word(move)
-        scores = dict()
-        for word in words:
-            self.crossword.set_word(move, word)
-            score = 1
-            cross_moves = [cross_move for cross_move in self.crossword.crosses[(i, j, DIR)]
-                           if cross_move in self.moves]
-            for cross_move in cross_moves:
-                little_pattern = self.crossword.get_word(cross_move)
-                if little_pattern in self.cache:
-                    little_possible_words = self.cache[little_pattern]
-                else:
-                    little_possible_words = self.crossword.find_possible_words(self.optimized_dictionary,
-                                                                               cross_move,
-                                                                               optimize=True)
-                    self.cache[little_pattern] = little_possible_words
-                score *= len(little_possible_words)
-                if not score:
-                    break
-            scores[word] = score
-            self.crossword.set_word(move, pattern)
-        words.sort(key=lambda w: scores[w], reverse=True)
-        if not desc:
-            words.reverse()
-        return scores
 
     def visit(self):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS
@@ -92,42 +64,33 @@ class Generator:
         print("Cache Words: ", CACHE_WORDS)
         if not self.moves:
             print(self.crossword)
-            LEAVES += 1
             return True
-        scores = dict()
-        min_score, min_move, possible_words = float('inf'), None, None
-        for move in self.moves:
-            pattern = self.crossword.get_word(move).replace(' ', '.')
-            if pattern in self.cache.keys():
-                attempt_possible_words = self.cache[pattern]
-                CACHE_ACCESSES += 1
-            else:
-                attempt_possible_words = self.crossword.find_possible_words(self.optimized_dictionary, move,
-                                                                            optimize=True)
-                self.cache[pattern] = attempt_possible_words
-                CACHE_WORDS += len(attempt_possible_words)
-            scores[move.get_params()] = len(attempt_possible_words)
-            if scores[move.get_params()] < min_score:
-                min_score = scores[move.get_params()]
-                min_move = move
-                possible_words = attempt_possible_words
-        if min_score == 0:
-            LEAVES += 1
+        shuffle(self.moves)
+        move = self.moves.pop()
+        print(move)
+        pattern = self.crossword.get_word(move)
+        if pattern in self.cache:
+            words = self.cache[pattern]
+        else:
+            words = self.crossword.find_possible_words(self.optimized_dictionary, move, optimize=True)
+            self.cache[pattern] = words
+        if not words:
+            self.moves.append(move)
+            self.crossword.set_word(move, pattern)
             return False
         else:
-            partial_word = self.crossword.get_word(min_move)
-            self.moves.remove(min_move)
-            scores = self.sort_words(words=possible_words, move=min_move, desc=True)
-            for word in possible_words:
-                if scores[word]:    # Score Boosting
-                    self.crossword.set_word(min_move, word)
-                    solution = self.visit()
-                    if solution:
-                        return True
-                else:
-                    LEAVES += 1
-            self.moves.append(min_move)
-            self.crossword.set_word(min_move, partial_word)
+            found_solution = False
+            for word in words:
+                self.crossword.set_word(move, word)
+                if self.visit():
+                    found_solution = True
+                    break
+            self.moves.append(move)
+            if found_solution:
+                return True
+            else:
+                self.crossword.set_word(move, pattern)
+                return False
           
         
 if __name__ == "__main__":
@@ -149,7 +112,7 @@ if __name__ == "__main__":
     print(crossword.__str__(numbers=True))
     generator = Generator(crossword, dictionary)
     start = time()
-    generator.visit()
+    print(generator.visit())
     print("DURATION: %d" % (time() - start))
 
 
