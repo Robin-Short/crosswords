@@ -15,6 +15,9 @@ class Move:
     def get_params(self):
         return self.i, self.j, self.DIR
 
+    def __eq__(self, pos):
+        return self.i == pos.i and self.j == pos.j and self.DIR == pos.DIR
+
 class Cell:
     def __init__(self, value: str, is_black: bool, number, horizontal_length: int, vertical_length: int):
         self.value = value                          # ['A', 'B', ..., 'Z', '.']
@@ -87,7 +90,7 @@ class Crosswords:
             for j in range(self.width):
                 txt += self[i, j].__str__(number=numbers) + '|'
         return txt + '\n' + '*---' * self.width + '*\n'
-    
+
     def get_cell(self, i, j):
         return self[i, j]
     
