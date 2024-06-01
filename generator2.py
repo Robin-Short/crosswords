@@ -3,6 +3,20 @@ from crosswords import Move, Crosswords, HORIZONTAL, VERTICAL
 from matplotlib import pyplot as plt
 from dictionary import dictionary
 from time import time
+import os
+
+
+def clear_console():
+    # Imposta la variabile TERM se non è già impostata
+    if 'TERM' not in os.environ:
+        os.environ['TERM'] = 'xterm-256color'
+
+    # Per Windows
+    if os.name == 'nt':
+        os.system('cls')
+    # Per macOS e Linux (os.name è 'posix')
+    else:
+        os.system('clear')
 
 VISITS = 0
 LEAVES = 0
@@ -63,13 +77,14 @@ class Generator:
     def visit(self):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS, BACK_JUMP
         VISITS += 1
+        clear_console()
+        print(self.crossword)
         print("\nVisite:      ", VISITS)
         print("Foglie:      ", LEAVES)
         print("Cache Uses:  ", CACHE_ACCESSES)
         print("Cache Keys:  ", len(self.cache))
         print("Cache Words: ", CACHE_WORDS)
         print("Back Jumps:  ", BACK_JUMP)
-        print(self.crossword)
         if not self.moves:
             print(self.crossword.__str__(numbers=True))
             self.crossword.show(self.dictionary)
