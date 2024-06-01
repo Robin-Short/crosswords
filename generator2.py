@@ -24,6 +24,8 @@ LEAVES = 0
 CACHE_ACCESSES = 0
 CACHE_WORDS = 0
 BACK_JUMP = 0
+
+
 TREE = Tree()
 
 def word_distance(word1, word2):
@@ -115,17 +117,21 @@ class Generator:
     def visit(self, tree):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS, BACK_JUMP, SLOW
         VISITS += 1
-        if VISITS % 200 == 0:
-            self.save_tree()
-            clear_console()
+        if VISITS % 500 == 0:
+            #self.save_tree()
+            #clear_console()
             print(self.crossword)
-            print("\nVisite:      ", VISITS)
-            print("Foglie:      ", LEAVES)
-            print("Cache Uses:  ", CACHE_ACCESSES)
-            print("Cache Keys:  ", len(self.cache))
-            print("Cache Words: ", CACHE_WORDS)
-            print("Back Jumps:  ", BACK_JUMP)
-            print("Depth:       ", self.crossword.n_moves - len(self.moves))
+            print()
+            print("Visits:              ", VISITS)
+            print("Leaves:              ", LEAVES)
+            print("Cache Uses:          ", CACHE_ACCESSES)
+            print("Cache Keys:          ", len(self.cache))
+            print("Cache Words:         ", CACHE_WORDS)
+            print("Back Jumps:          ", BACK_JUMP)
+            print("Depth:               ", self.crossword.n_moves - len(self.moves))
+            return True, None
+
+
         if not self.moves:
             print(str(self.crossword))
             self.crossword.show(self.dictionary)
