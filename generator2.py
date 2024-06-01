@@ -1,6 +1,7 @@
 from random import shuffle
 from crosswords import Move, Crosswords, HORIZONTAL, VERTICAL
 from dictionary import dictionary
+from tree import Tree
 from time import time
 import os
 
@@ -23,6 +24,7 @@ LEAVES = 0
 CACHE_ACCESSES = 0
 CACHE_WORDS = 0
 BACK_JUMP = 0
+TREE = Tree()
 
 def word_distance(word1, word2):
     if len(word1) != len(word2):
@@ -60,6 +62,11 @@ class Generator:
         self.cache = dict()
         self.back_jump = back_jump
         self.optimized_dictionary = self.get_optimized_dictionary()
+        self.tree = Tree(content=(None, None))
+
+    def save_tree(self, filename="tree.txt"):
+        with open(filename, "w") as file:
+            file.write(self.tree.preorder_visit())
 
     def get_optimized_dictionary(self):
         res = dict()
@@ -79,13 +86,34 @@ class Generator:
             pattern = self.crossword.get_word(m)
             if not pattern in self.cache:
                 self.cache[pattern] = self.crossword.find_possible_words(self.optimized_dictionary, m, optimize=True)
-            if not self.cache[pattern]:
+            if len(self.cache[pattern]) == 0:
                 return True
         return False
 
-    def visit(self):
-        global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS, BACK_JUMP
+    def get_score(self, move, word):
+        res = 1
+        pattern = self.crossword.get_word(move)
+        self.crossword.set_word(move, word)
+        for m in self.crossword.crosses[move.get_params()]:
+            cross_pattern = self.crossword.get_word(m)
+            if not cross_pattern in self.cache:
+                self.cache[cross_pattern] = self.crossword.find_possible_words(self.optimized_dictionary, m, optimize=True)
+            res *= len(self.cache[cross_pattern])
+            if res == 0:
+                break
+        self.crossword.set_word(move, pattern)
+        return res
+
+    def sort_by_score(self, move, words, reverse=True):
+        words.sort(key=lambda x: self.get_score(move, x), reverse=reverse)
+
+    def visit(self, tree):
+        global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS, BACK_JUMP, SLOW
         VISITS += 1
+        if VISITS % 1000 == 0:
+            self.save_tree()
+        #if VISITS == 15000:
+        #    SLOW = True
         clear_console()
         print(self.crossword)
         print("\nVisite:      ", VISITS)
@@ -95,8 +123,6 @@ class Generator:
         print("Cache Words: ", CACHE_WORDS)
         print("Back Jumps:  ", BACK_JUMP)
         print("Depth:       ", self.crossword.n_moves - len(self.moves))
-        if SLOW:
-            input("Invio per continuare_ ")
         if not self.moves:
             print(self.crossword.__str__(numbers=True))
             self.crossword.show(self.dictionary)
@@ -105,6 +131,10 @@ class Generator:
         #shuffle(self.moves)
         move = self.moves.pop()
         pattern = self.crossword.get_word(move)
+        if SLOW:
+            print("Move: %s - %s" % (str(move), pattern))
+
+            input("Invio per continuare_ ")
         if self.check_pruning(move):
             self.moves.append(move)
             self.crossword.set_word(move, pattern)
@@ -123,9 +153,12 @@ class Generator:
                 self.cache[pattern] = words
                 CACHE_WORDS += len(words)
             found_solution = False
+            self.sort_by_score(move, words)
             for word in words:
                 self.crossword.set_word(move, word)
-                found_solution, children_move = self.visit()
+                node = Tree(content=(move, word))
+                tree.add_son(node)
+                found_solution, children_move = self.visit(node)
                 # BACK JUMP CONDITION
                 if self.back_jump:
                     if not children_move is None:
@@ -151,7 +184,7 @@ if __name__ == "__main__":
     print(crossword.__str__(numbers=True))
     generator = Generator(crossword, dictionary, back_jump=True)
     start = time()
-    print(generator.visit())
+    print(generator.visit(generator.tree))
     print("\nVisite:      ", VISITS)
     print("Foglie:      ", LEAVES)
     print("Cache Uses:  ", CACHE_ACCESSES)
