@@ -105,26 +105,29 @@ class Generator:
         return res
 
     def sort_by_score(self, move, words, reverse=True):
-        words.sort(key=lambda x: self.get_score(move, x), reverse=reverse)
+        scores = dict()
+        for word in words:
+            scores[word] = self.get_score(move, word)
+        words.sort(key=lambda x: scores[x], reverse=reverse)
+        return scores
+
 
     def visit(self, tree):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS, BACK_JUMP, SLOW
         VISITS += 1
-        if VISITS % 1000 == 0:
+        if VISITS % 200 == 0:
             self.save_tree()
-        #if VISITS == 15000:
-        #    SLOW = True
-        clear_console()
-        print(self.crossword)
-        print("\nVisite:      ", VISITS)
-        print("Foglie:      ", LEAVES)
-        print("Cache Uses:  ", CACHE_ACCESSES)
-        print("Cache Keys:  ", len(self.cache))
-        print("Cache Words: ", CACHE_WORDS)
-        print("Back Jumps:  ", BACK_JUMP)
-        print("Depth:       ", self.crossword.n_moves - len(self.moves))
+            clear_console()
+            print(self.crossword)
+            print("\nVisite:      ", VISITS)
+            print("Foglie:      ", LEAVES)
+            print("Cache Uses:  ", CACHE_ACCESSES)
+            print("Cache Keys:  ", len(self.cache))
+            print("Cache Words: ", CACHE_WORDS)
+            print("Back Jumps:  ", BACK_JUMP)
+            print("Depth:       ", self.crossword.n_moves - len(self.moves))
         if not self.moves:
-            print(self.crossword.__str__(numbers=True))
+            print(str(self.crossword))
             self.crossword.show(self.dictionary)
             LEAVES += 1
             return True, None
@@ -151,27 +154,28 @@ class Generator:
             if len(words) == 0:
                 self.moves.append(move)
                 self.crossword.set_word(move, pattern)
-                print(move)
+                #print(move)
                 if SLOW:
                     input("Back Jump begin: continue?")
                 return False, move
             found_solution = False
-            self.sort_by_score(move, words)
+            scores = self.sort_by_score(move, words)
             for word in words:
-                self.crossword.set_word(move, word)
-                node = Tree(content=(move, word))
-                tree.add_son(node)
-                found_solution, children_move = self.visit(node)
-                # BACK JUMP CONDITION
-                if self.back_jump:
-                    if not children_move is None:
-                        if not children_move in self.crossword.crosses[move.get_params()]:
-                            BACK_JUMP += 1
-                            self.moves.append(move)
-                            self.crossword.set_word(move, pattern)
-                            return found_solution, children_move
-                if found_solution:
-                    break
+                if scores[word] != 0:
+                    self.crossword.set_word(move, word)
+                    node = Tree(content=(move, word))
+                    tree.add_son(node)
+                    found_solution, children_move = self.visit(node)
+                    # BACK JUMP CONDITION
+                    if self.back_jump:
+                        if not children_move is None:
+                            if not children_move in self.crossword.crosses[move.get_params()]:
+                                BACK_JUMP += 1
+                                self.moves.append(move)
+                                self.crossword.set_word(move, pattern)
+                                return found_solution, children_move
+                    if found_solution:
+                        break
             self.moves.append(move)
             if found_solution:
                 return True, None
@@ -188,6 +192,7 @@ if __name__ == "__main__":
     generator = Generator(crossword, dictionary, back_jump=True)
     start = time()
     print(generator.visit(generator.tree))
+    generator.save_tree()
     print("\nVisite:      ", VISITS)
     print("Foglie:      ", LEAVES)
     print("Cache Uses:  ", CACHE_ACCESSES)
