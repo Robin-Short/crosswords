@@ -106,14 +106,14 @@ class Crosswords:
             if move.DIR == HORIZONTAL:
                 n += 1
                 word = self.get_word(move)
-                txt += "\n  %d - %s" % (n, dictionary[word])
+                txt += "\n  %d - %s" % (n, dictionary[word] if word in dictionary else 'ERROR!')
         txt += "\n\nVERTICALS:\n"
         n = 0
         for move in self.moves_list:
             if move.DIR == VERTICAL:
                 n += 1
                 word = self.get_word(move)
-                txt += "\n  %d - %s" % (n, dictionary[word])
+                txt += "\n  %d - %s" % (n, dictionary[word] if word in dictionary else 'ERROR!')
         print(txt)
         return txt
 

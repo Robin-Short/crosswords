@@ -139,11 +139,7 @@ class Generator:
             self.moves.append(move)
             self.crossword.set_word(move, pattern)
             LEAVES += 1
-            # BACK JUMP ORIGIN
-            print(move)
-            if SLOW:
-                input("Back Jump begin: continue?")
-            return False, move
+            return False, None
         else:
             if pattern in self.cache:
                 CACHE_ACCESSES += 1
@@ -152,6 +148,13 @@ class Generator:
                 words = self.crossword.find_possible_words(self.optimized_dictionary, move, optimize=True)
                 self.cache[pattern] = words
                 CACHE_WORDS += len(words)
+            if len(words) == 0:
+                self.moves.append(move)
+                self.crossword.set_word(move, pattern)
+                print(move)
+                if SLOW:
+                    input("Back Jump begin: continue?")
+                return False, move
             found_solution = False
             self.sort_by_score(move, words)
             for word in words:
@@ -192,8 +195,4 @@ if __name__ == "__main__":
     print("Cache Words: ", CACHE_WORDS)
     print("Back Jumps: ", BACK_JUMP)
     print("DURATION: %d" % (time() - start))
-
-
-
-
 
