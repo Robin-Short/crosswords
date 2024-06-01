@@ -42,7 +42,7 @@ class Generator:
                 self.moves.append(Move(i, j, HORIZONTAL))
             if self.crossword[i, j].vertical_length > 0:
                 self.moves.append(Move(i, j, VERTICAL))
-        self.moves.sort(key=lambda x: len(self.crossword.get_word(x)), reverse=True)
+        self.moves.sort(key=lambda x: len(self.crossword.get_word(x)))
         self.cache = dict()
         self.back_jump = back_jump
         self.optimized_dictionary = self.get_optimized_dictionary()
