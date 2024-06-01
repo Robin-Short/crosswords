@@ -53,7 +53,7 @@ class Crosswords:
                 is_black = (i, j) in self.black_indexes
                 is_horizontal_number = (j == 0 or row[j-1].is_black) and not is_black
                 is_horizontal_number = is_horizontal_number and not (j + 1 == self.width or (i, j + 1) in self.black_indexes)
-                is_vertical_number = (i == 0 or self[i-1, j].is_black) and not is_black
+                is_vertical_number = (i == 0 or self.grid[i-1][j].is_black) and not is_black
                 is_vertical_number = is_vertical_number and not (i + 1 == self.height or (i + 1, j) in self.black_indexes)
                 horizontal_length = 0
                 if is_horizontal_number:
@@ -93,7 +93,7 @@ class Crosswords:
         for i in range(self.height):
             txt += '\n' + '*---' * self.width + '*\n|'
             for j in range(self.width):
-                txt += self[i, j].__str__(number=numbers) + '|'
+                txt += self.grid[i][j].__str__(number=numbers) + '|'
         return txt + '\n' + '*---' * self.width + '*\n'
 
     def show(self, dictionary):
@@ -120,7 +120,7 @@ class Crosswords:
 
 
     def get_cell(self, i, j):
-        return self[i, j]
+        return self.grid[i][j]
     
     def get_nth_horizontal_indexes(self, n):
         '''
@@ -128,7 +128,7 @@ class Crosswords:
         '''
         curr_n = 0
         for i, j in self.numbers_list:
-            if self[i, j].horizontal_length > 0:
+            if self.grid[i][j].horizontal_length > 0:
                 curr_n += 1
             if n == curr_n:
                 return i, j
@@ -139,27 +139,27 @@ class Crosswords:
         '''
         curr_n = 0
         for i, j in self.numbers_list:
-            if self[i, j].vertical_length > 0:
+            if self.grid[i][j].vertical_length > 0:
                 curr_n += 1
             if n == curr_n:
                 return i, j
 
     def get_horizontal_word(self, i, j):
         '''
-        return the stringe composed by adjacency cells horizontally of word started at i, j if self[i, j].horizontal_number else None
+        return the stringe composed by adjacency cells horizontally of word started at i, j if self.grid[i][j].horizontal_number else None
         '''
         word = ''
-        for jj in range(j, j + self[i, j].horizontal_length):
-            word += self[i, jj].value
+        for jj in range(j, j + self.grid[i][j].horizontal_length):
+            word += self.grid[i][jj].value
         return word
        
     def get_vertical_word(self, i, j):
         '''
-        return the stringe composed by adjacency cells vertically of word started at i, j if self[i, j].horizontal_number else None
+        return the stringe composed by adjacency cells vertically of word started at i, j if self.grid[i][j].horizontal_number else None
         '''
         word = ''
-        for ii in range(i, i + self[i, j].vertical_length):
-            word += self[ii, j].value
+        for ii in range(i, i + self.grid[i][j].vertical_length):
+            word += self.grid[ii][j].value
         return word
     
     def get_word(self, move):
@@ -170,15 +170,15 @@ class Crosswords:
         '''
         set horizontal word who started at i, j
         '''
-        for jj in range(j, j + self[i, j].horizontal_length):
-            self[i, jj].value = word[jj - j]
+        for jj in range(j, j + self.grid[i][j].horizontal_length):
+            self.grid[i][jj].value = word[jj - j]
     
     def set_vertical_word(self, i, j, word):
         '''
         set horizontal word who started at i, j
         '''
-        for ii in range(i, i + self[i, j].vertical_length):
-            self[ii, j].value = word[ii - i]
+        for ii in range(i, i + self.grid[i][j].vertical_length):
+            self.grid[ii][j].value = word[ii - i]
         return word
     
     def set_word(self, move, word):
@@ -189,36 +189,51 @@ class Crosswords:
             self.set_vertical_word(i, j, word)
     
     def del_horizontal_word(self, i, j):
-        word = ' ' * self[i, j].horizontal_length
+        word = ' ' * self.grid[i][j].horizontal_length
         self.set_horizontal_word(i, j, word)
        
     def del_vertical_word(self, i, j):
-        word = ' ' * self[i, j].vertical_length
+        word = ' ' * self.grid[i][j].vertical_length
         self.set_vertical_word(i, j, word)
         
     def find_possible_horizontal_words(self, dictionary, i, j, optimize=False):
-        """
-        if optimize we suppose that dictionary is a structure like this:
-            {
-                1: [wordlist1],
-                2: [wordlist2],
-                :
-            }
-        """
         pattern = self.get_horizontal_word(i, j).replace(' ', '.')
         res = []
-        iterable = dictionary.keys() if not optimize else dictionary[len(pattern)]
+        
+        # Precompilare il pattern per evitare di compilarlo ad ogni iterazione
+        pattern_re = re.compile(pattern)
+        
+        # Usare una struttura dati più efficiente per la ricerca (es. set)
+        if optimize:
+            iterable = dictionary.get(len(pattern), [])
+        else:
+            iterable = dictionary.keys()
+        
         for word in iterable:
-            if re.fullmatch(pattern, word):
+            if pattern_re.fullmatch(word):
                 res.append(word)
         return res
     
-    def find_possible_vertical_words(self, dictionary, i, j, optimize=False):
+    '''def find_possible_vertical_words(self, dictionary, i, j, optimize=False):
         pattern = self.get_vertical_word(i, j).replace(' ', '.')
         res = []
         iterable = dictionary.keys() if not optimize else dictionary[len(pattern)]
         for word in iterable:
             if re.fullmatch(pattern, word):
+                res.append(word)
+        return res'''
+    
+    def find_possible_vertical_words(self, dictionary, i, j, optimize=False):
+        pattern = self.get_vertical_word(i, j).replace(' ', '.')
+        res = []
+        
+        # Precompilare il pattern per evitare di compilarlo ad ogni iterazione
+        pattern_re = re.compile(pattern)
+        
+        # Usare una struttura dati più efficiente per la ricerca (es. set)
+        iterable = dictionary.keys() if not optimize else dictionary[len(pattern)]
+        for word in iterable:
+            if pattern_re.fullmatch(word):
                 res.append(word)
         return res
     
@@ -230,13 +245,13 @@ class Crosswords:
             return self.find_possible_vertical_words(dictionary, i, j, optimize)
 
     def get_horizontal_cross_moves(self, i, j):
-        positions = [(i, j + jj) for jj in range(self[i, j].horizontal_length)]
+        positions = [(i, j + jj) for jj in range(self.grid[i][j].horizontal_length)]
         cross_moves = []
         for move in self.moves_list:
             I, J, DIR = move.get_params()
             ok = False
             if DIR == VERTICAL:
-                for ii in range(self[I, J].vertical_length):
+                for ii in range(self.grid[I][J].vertical_length):
                     if (I + ii, J) in positions:
                         ok = True
                         break
@@ -245,13 +260,13 @@ class Crosswords:
         return cross_moves
 
     def get_vertical_cross_moves(self, i, j):
-        positions = [(i + ii, j) for ii in range(self[i, j].vertical_length)]
+        positions = [(i + ii, j) for ii in range(self.grid[i][j].vertical_length)]
         cross_moves = []
         for move in self.moves_list:
             I, J, DIR = move.get_params()
             ok = False
             if DIR == HORIZONTAL:
-                for jj in range(self[I, J].horizontal_length):
+                for jj in range(self.grid[I][J].horizontal_length):
                     if (I, J + jj) in positions:
                         ok = True
                         break
@@ -271,8 +286,8 @@ class Crosswords:
         '''
         return if horizontal word started at i, j is completed or not
         '''
-        for jj in range(j, j + self[i, j].horizontal_length):
-            if self[i, jj].value == ' ' and not self[i, j].is_black:
+        for jj in range(j, j + self.grid[i][j].horizontal_length):
+            if self.grid[i][jj].value == ' ' and not self.grid[i][j].is_black:
                 return False
         return True
         
@@ -280,21 +295,21 @@ class Crosswords:
         '''
         return if vertical word started at i, j is completed or not
         '''
-        for ii in range(i, i + self[i, j].vertical_length):
-            if self[ii, j].value == ' ' and not self[i, j].is_black:
+        for ii in range(i, i + self.grid[i][j].vertical_length):
+            if self.grid[ii][j].value == ' ' and not self.grid[i][j].is_black:
                 return False
         return True
     
     def fill_random(self):
        for i in range(self.height):
            for j in range(self.width):
-               if self[i, j].value == ' ' and not self[i, j].is_black:
-                   self[i, j].value = chars[randint(0, len(chars) - 1)]
+               if self.grid[i][j].value == ' ' and not self.grid[i][j].is_black:
+                   self.grid[i][j].value = chars[randint(0, len(chars) - 1)]
            
     def is_filled(self):
         for i in range(self.height):
             for j in range(self.width):
-                if self[i, j].value == ' ' and not self[i, j].is_black:
+                if self.grid[i][j].value == ' ' and not self.grid[i][j].is_black:
                     return False
         return True
         
@@ -302,7 +317,7 @@ class Crosswords:
         loss = 0
         for (i, j) in self.numbers_list:
             word = self.get_horizontal_word(i, j)
-            if self[i, j].horizontal_length > 0 and not word in dictionary:
+            if self.grid[i][j].horizontal_length > 0 and not word in dictionary:
                 loss += 1
         return loss
     
@@ -310,7 +325,7 @@ class Crosswords:
         loss = 0
         for (i, j) in self.numbers_list:
             word = self.get_vertical_word(i, j)
-            if self[i, j].vertical_length > 0 and not word in dictionary:
+            if self.grid[i][j].vertical_length > 0 and not word in dictionary:
                 loss += 1
         return loss
     
