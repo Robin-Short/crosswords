@@ -91,6 +91,29 @@ class Crosswords:
                 txt += self[i, j].__str__(number=numbers) + '|'
         return txt + '\n' + '*---' * self.width + '*\n'
 
+    def show(self, dictionary):
+        '''
+        use only when crossword is completed!
+        '''
+        txt = "\nHORIZONTALS:\n"
+        n = 0
+        for move in self.moves_list:
+            if move.DIR == HORIZONTAL:
+                n += 1
+                word = self.get_word(move)
+                txt += "\n  %d - %s" % (n, dictionary[word])
+        txt += "\n\nVERTICALS:\n"
+        n = 0
+        for move in self.moves_list:
+            if move.DIR == VERTICAL:
+                n += 1
+                word = self.get_word(move)
+                txt += "\n  %d - %s" % (n, dictionary[word])
+        print(txt)
+        return txt
+
+
+
     def get_cell(self, i, j):
         return self[i, j]
     

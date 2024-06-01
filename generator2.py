@@ -42,6 +42,7 @@ class Generator:
                 self.moves.append(Move(i, j, HORIZONTAL))
             if self.crossword[i, j].vertical_length > 0:
                 self.moves.append(Move(i, j, VERTICAL))
+        self.moves.sort(key=lambda x: len(self.crossword.get_word(x)), reverse=True)
         self.cache = dict()
         self.back_jump = back_jump
         self.optimized_dictionary = self.get_optimized_dictionary()
@@ -67,13 +68,14 @@ class Generator:
         print("Cache Uses:  ", CACHE_ACCESSES)
         print("Cache Keys:  ", len(self.cache))
         print("Cache Words: ", CACHE_WORDS)
-        print("Back Jumps: ", BACK_JUMP)
+        print("Back Jumps:  ", BACK_JUMP)
         print(self.crossword)
         if not self.moves:
-            print(self.crossword)
+            print(self.crossword.__str__(numbers=True))
+            self.crossword.show(self.dictionary)
             LEAVES += 1
             return True, None
-        shuffle(self.moves)
+        #shuffle(self.moves)
         move = self.moves.pop()
         pattern = self.crossword.get_word(move)
         if pattern in self.cache:

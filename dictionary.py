@@ -1,5 +1,16 @@
-with open("dict_test.txt", "r") as file:
-    words = file.readlines()
+import json
+from random import sample
 
-dictionary = {word[:-1].upper(): "definizione a caso" for word in words}
-length = [len(word[-1]) for word in words]
+print(">> Loading Dictionary")
+# Specifica il percorso del file JSON
+percorso_file_json = 'words.json'
+
+# Apri il file JSON e carica il contenuto in una variabile dizionario
+with open(percorso_file_json, 'r') as file:
+    full_dictionary = json.load(file)
+
+dictionary = {item['word']: sample(item['definitions'], 1)[0] for item in full_dictionary if item['definitions']}
+print("Founded dictionary with %d words. \nHead:" % len(dictionary))
+for i, (word, definition) in enumerate(dictionary.items()):
+    if i < 20:
+        print("    %s: %s" % (word, definition))
