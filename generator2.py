@@ -1,10 +1,10 @@
 from random import shuffle
 from crosswords import Move, Crosswords, HORIZONTAL, VERTICAL
-from matplotlib import pyplot as plt
 from dictionary import dictionary
 from time import time
 import os
 
+SLOW = False
 
 def clear_console():
     # Imposta la variabile TERM se non è già impostata
@@ -73,6 +73,15 @@ class Generator:
             if not n in res:
                 raise ValueError("Non ci sono parole lunghe %d" % n)
         return res
+    
+    def check_pruning(self, move):
+        for m in self.crossword.crosses[move.get_params()]:
+            pattern = self.crossword.get_word(m)
+            if not pattern in self.cache:
+                self.cache[pattern] = self.crossword.find_possible_words(self.optimized_dictionary, m, optimize=True)
+            if not self.cache[pattern]:
+                return True
+        return False
 
     def visit(self):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS, BACK_JUMP
@@ -85,6 +94,9 @@ class Generator:
         print("Cache Keys:  ", len(self.cache))
         print("Cache Words: ", CACHE_WORDS)
         print("Back Jumps:  ", BACK_JUMP)
+        print("Depth:       ", self.crossword.n_moves - len(self.moves))
+        if SLOW:
+            input("Invio per continuare_ ")
         if not self.moves:
             print(self.crossword.__str__(numbers=True))
             self.crossword.show(self.dictionary)
@@ -93,20 +105,23 @@ class Generator:
         #shuffle(self.moves)
         move = self.moves.pop()
         pattern = self.crossword.get_word(move)
-        if pattern in self.cache:
-            CACHE_ACCESSES += 1
-            words = self.cache[pattern]
-        else:
-            words = self.crossword.find_possible_words(self.optimized_dictionary, move, optimize=True)
-            self.cache[pattern] = words
-            CACHE_WORDS += len(words)
-        if not words:
+        if self.check_pruning(move):
             self.moves.append(move)
             self.crossword.set_word(move, pattern)
             LEAVES += 1
             # BACK JUMP ORIGIN
+            print(move)
+            if SLOW:
+                input("Back Jump begin: continue?")
             return False, move
         else:
+            if pattern in self.cache:
+                CACHE_ACCESSES += 1
+                words = self.cache[pattern]
+            else:
+                words = self.crossword.find_possible_words(self.optimized_dictionary, move, optimize=True)
+                self.cache[pattern] = words
+                CACHE_WORDS += len(words)
             found_solution = False
             for word in words:
                 self.crossword.set_word(move, word)

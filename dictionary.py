@@ -6,7 +6,7 @@ print(">> Loading Dictionary")
 percorso_file_json = 'words.json'
 
 # Apri il file JSON e carica il contenuto in una variabile dizionario
-with open(percorso_file_json, 'r') as file:
+with open(percorso_file_json, 'r', encoding="utf8") as file:
     full_dictionary = json.load(file)
 
 dictionary = {item['word']: sample(item['definitions'], 1)[0] for item in full_dictionary if item['definitions']}

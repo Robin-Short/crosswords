@@ -1,4 +1,3 @@
-import numpy as np
 from random import randint
 import re
 
@@ -11,6 +10,12 @@ class Move:
         self.i = i
         self.j = j
         self.DIR = DIR
+
+    def __str__(self):
+        return str(self.get_params())
+
+    def __repr__(self):
+        return(str(self))
 
     def get_params(self):
         return self.i, self.j, self.DIR
@@ -77,6 +82,7 @@ class Crosswords:
         self.crosses = dict()
         for move in self.moves_list:
             self.crosses[move.get_params()] = self.get_cross_moves(move)
+        self.n_moves = len(self.moves_list)
 
     
     def __getitem__(self, item):
