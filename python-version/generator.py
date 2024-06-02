@@ -1,6 +1,6 @@
 from random import shuffle
 from crosswords import Move, Crosswords, HORIZONTAL, VERTICAL
-from dictionary import dictionary
+from dictionary import get_dictionary
 from tree import Tree
 from time import time
 import os
@@ -72,15 +72,19 @@ class Generator:
 
     def get_optimized_dictionary(self):
         res = dict()
+        lengths = set()
+        for move in self.moves:
+            lengths.add(len(self.crossword.move_word_map[move.get_params()]))
         for word in self.dictionary.keys():
             n = len(word)
-            if n in res:
-                res[n].append(word)
-            else:
-                res[n] = [word]
-        for n in range(2, 16):
-            if not n in res:
-                raise ValueError("Non ci sono parole lunghe %d" % n)
+            if n in lengths:
+                if n in res:
+                    res[n].append(word)
+                else:
+                    res[n] = [word]
+        for length in lengths:
+            if res[length] == list():
+                raise ValueError("Non ci sono parole lunghe %d" % length)
         return res
     
     def check_pruning(self, move):
@@ -124,7 +128,7 @@ class Generator:
 
     def visit(self, tree):
         global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS, BACK_JUMP, SLOW
-        if VISITS % 10000 == 0:
+        if VISITS % 1000 == 0:
             #self.save_tree()
             #clear_console()
             print(self.crossword)
@@ -195,7 +199,7 @@ if __name__ == "__main__":
                            [(0, 5), (0, 7), (0, 9), (1, 2), (1, 4), (1, 2), (1, 4), (2, 3), (3, 1), (4, 0), (4, 11),
                             (5, 7), (5, 11), (6, 0), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 5)])
     print(crossword.__str__(numbers=True))
-    generator = Generator(crossword, dictionary, back_jump=False)
+    generator = Generator(crossword, dictionary=get_dictionary(test=True, n_words=4000), back_jump=False)
     start = time()
     print(generator.visit(generator.tree))
     generator.save_tree()

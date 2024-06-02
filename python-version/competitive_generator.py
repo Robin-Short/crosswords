@@ -1,7 +1,13 @@
+'''
+First attempt of competitive approach.
+Does not work.
+'''
+
 from random import randint
 from crosswords import Crosswords
 from matplotlib import pyplot as plt
-from dictionary import dictionary
+from dictionary import get_dictionary
+dictionary = get_dictionary()
 
 HORIZONTAL = 0
 VERTICAL = 1
