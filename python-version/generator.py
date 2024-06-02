@@ -19,36 +19,6 @@ def clear_console():
     else:
         os.system('clear')
 
-VISITS = 0
-LEAVES = 0
-CACHE_ACCESSES = 0
-CACHE_WORDS = 0
-BACK_JUMP = 0
-
-
-TREE = Tree()
-
-def word_distance(word1, word2):
-    if len(word1) != len(word2):
-        return float('inf')
-    word1 = word1.encode('utf-8')
-    word2 = word2.encode('utf-8')
-    # Trova gli indici in cui i caratteri sono diversi utilizzando XOR
-    differing_indices = [i for i in range(len(word1)) if word1[i] ^ word2[i]]
-    return len(differing_indices)
-
-def most_similar_word(word1, dictionary):
-    most_similar = None
-    dist = word_distance(word1, '')
-    for word, _ in dictionary.items():
-        curr_dist = word_distance(word1, word)
-        if curr_dist < dist:
-            most_similar = word
-            dist = curr_dist
-    if most_similar is None:
-        pass
-    return most_similar
-
 
 class Generator:
     def __init__(self, crossword, dictionary, back_jump=False):
@@ -65,6 +35,12 @@ class Generator:
         self.back_jump = back_jump
         self.optimized_dictionary = self.get_optimized_dictionary()
         self.tree = Tree(content=(None, None))
+        # CONTROL PARAMETERS
+        self.VISITS = 0
+        self.LEAVES = 0
+        self.CACHE_ACCESSES = 0
+        self.CACHE_WORDS = 0
+        self.START_TIME = None
 
     def save_tree(self, filename="tree.txt"):
         with open(filename, "w") as file:
@@ -86,22 +62,8 @@ class Generator:
             if res[length] == list():
                 raise ValueError("Non ci sono parole lunghe %d" % length)
         return res
-    
-    def check_pruning(self, move):
-        global CACHE_ACCESSES, CACHE_WORDS
-        for m in self.crossword.crosses[move.get_params()]:
-            pattern = self.crossword.get_word(m)
-            if not pattern in self.cache:
-                self.cache[pattern] = self.crossword.find_possible_words(self.optimized_dictionary, m, optimize=True)
-                CACHE_WORDS += len(self.cache[pattern])
-            else:
-                CACHE_ACCESSES += 1
-            if len(self.cache[pattern]) == 0:
-                return True
-        return False
 
     def get_score(self, move, word):
-        global CACHE_ACCESSES, CACHE_WORDS
         res = 1
         pattern = self.crossword.get_word(move)
         self.crossword.set_word(move, word)
@@ -109,9 +71,9 @@ class Generator:
             cross_pattern = self.crossword.get_word(m)
             if not cross_pattern in self.cache:
                 self.cache[cross_pattern] = self.crossword.find_possible_words(self.optimized_dictionary, m, optimize=True)
-                CACHE_WORDS += len(self.cache[cross_pattern])
+                self.CACHE_WORDS += len(self.cache[cross_pattern])
             else:
-                CACHE_ACCESSES += 1
+                self.CACHE_ACCESSES += 1
             res *= len(self.cache[cross_pattern])
             if res == 0:
                 break
@@ -125,27 +87,26 @@ class Generator:
         words.sort(key=lambda x: scores[x], reverse=reverse)
         return scores
 
-
-    def visit(self, tree):
-        global VISITS, LEAVES, CACHE_ACCESSES, CACHE_WORDS, BACK_JUMP, SLOW
-        if VISITS % 1000 == 0:
+    def visit_rec(self, tree, profile_stop=-1):
+        if self.VISITS == profile_stop:
+            return True, None
+        if self.VISITS % 1000 == 0:
             #self.save_tree()
             #clear_console()
             print(self.crossword)
             print()
-            print("Visits:              ", VISITS)
-            print("Leaves:              ", LEAVES)
-            print("Cache Uses:          ", CACHE_ACCESSES)
-            print("Cache Keys:          ", len(self.cache))
-            print("Cache Words:         ", CACHE_WORDS)
-            print("Back Jumps:          ", BACK_JUMP)
-            print("Depth:               ", self.crossword.n_moves - len(self.moves))
-            #return True, None
-        VISITS += 1
+            print("Preorder Visits:                 ", self.VISITS)
+            print("Preorder Time per visit (ms):    ", ((1000000 * (time() - self.START_TIME)) // max(1, self.VISITS)) / 1000)
+            print("Leaves:                          ", self.LEAVES)
+            print("Cache Uses:                      ", self.CACHE_ACCESSES)
+            print("Cache Keys:                      ", len(self.cache))
+            print("Cache Words:                     ", self.CACHE_WORDS)
+            print("Depth:                           ", self.crossword.n_moves - len(self.moves))
+        self.VISITS += 1
         if not self.moves:
             print(str(self.crossword))
             self.crossword.show(self.dictionary)
-            LEAVES += 1
+            self.LEAVES += 1
             return True, None
         #shuffle(self.moves)
         move = self.moves.pop()
@@ -154,44 +115,53 @@ class Generator:
             print("Move: %s - %s" % (str(move), pattern))
             input("Invio per continuare_ ")
         if pattern in self.cache:
-            CACHE_ACCESSES += 1
+            self.CACHE_ACCESSES += 1
             words = self.cache[pattern]
         else:
             words = self.crossword.find_possible_words(self.optimized_dictionary, move, optimize=True)
             self.cache[pattern] = words
-            CACHE_WORDS += len(words)
+            self.CACHE_WORDS += len(words)
         if len(words) == 0:
             self.moves.append(move)
             self.crossword.set_word(move, pattern)
-            #print(move)
             if SLOW:
                 input("Back Jump begin: continue?")
+            self.LEAVES += 1
             return False, move
         found_solution = False
         scores = self.sort_by_score(move, words)
+        is_leave = True
         for word in words:
             if scores[word] != 0:
+                is_leave = False
                 self.crossword.set_word(move, word)
                 node = Tree(content=(move, word))
                 tree.add_son(node)
-                found_solution, children_move = self.visit(node)
-                # BACK JUMP CONDITION
-                if self.back_jump:
-                    if not children_move is None:
-                        if not children_move in self.crossword.crosses[move.get_params()]:
-                            BACK_JUMP += 1
-                            self.moves.append(move)
-                            self.crossword.set_word(move, pattern)
-                            return found_solution, children_move
+                found_solution, children_move = self.visit_rec(node)
                 if found_solution:
                     break
+        self.LEAVES += 1 * is_leave
         self.moves.append(move)
         if found_solution:
             return True, None
         else:
             self.crossword.set_word(move, pattern)
-            LEAVES += 1
             return False, None
+
+    def visit(self, profile_stop=-1):
+        self.START_TIME = time()
+        res = self.visit_rec(self.tree, profile_stop=profile_stop)
+        self.save_tree()
+        print()
+        print("Visite:      ", self.VISITS)
+        print("Foglie:      ", self.LEAVES)
+        print("Cache Uses:  ", self.CACHE_ACCESSES)
+        print("Cache Keys:  ", len(generator.cache))
+        print("Cache Words: ", self.CACHE_WORDS)
+        print("DURATION: %d" % (time() - self.START_TIME))
+        print(generator.crossword.move_word_map)
+        return res
+
 
 
 if __name__ == "__main__":
@@ -199,16 +169,6 @@ if __name__ == "__main__":
                            [(0, 5), (0, 7), (0, 9), (1, 2), (1, 4), (1, 2), (1, 4), (2, 3), (3, 1), (4, 0), (4, 11),
                             (5, 7), (5, 11), (6, 0), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 5)])
     print(crossword.__str__(numbers=True))
-    generator = Generator(crossword, dictionary=get_dictionary(test=True, n_words=4000), back_jump=False)
-    start = time()
-    print(generator.visit(generator.tree))
-    generator.save_tree()
-    print("\nVisite:      ", VISITS)
-    print("Foglie:      ", LEAVES)
-    print("Cache Uses:  ", CACHE_ACCESSES)
-    print("Cache Keys:  ", len(generator.cache))
-    print("Cache Words: ", CACHE_WORDS)
-    print("Back Jumps: ", BACK_JUMP)
-    print("DURATION: %d" % (time() - start))
-    print(generator.crossword.move_word_map)
+    generator = Generator(crossword, dictionary=get_dictionary(test=False, n_words=16000), back_jump=False)
+    print(generator.visit(profile_stop=-1))
 
