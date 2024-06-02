@@ -206,4 +206,5 @@ if __name__ == "__main__":
     print("Cache Words: ", CACHE_WORDS)
     print("Back Jumps: ", BACK_JUMP)
     print("DURATION: %d" % (time() - start))
+    print(generator.crossword.move_word_map)
 

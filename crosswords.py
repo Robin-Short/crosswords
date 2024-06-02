@@ -80,15 +80,22 @@ class Crosswords:
                 row.append(cell)
             self.grid.append(row)
         self.crosses = dict()
+        self.move_word_map = dict()
         for move in self.moves_list:
             self.crosses[move.get_params()] = self.get_cross_moves(move)
+            self.move_word_map[move.get_params()] = '.' * len(self.get_word_slow(move))
         self.n_moves = len(self.moves_list)
-    
+        
+    def sync(self):
+        for move, word in self.move_word_map.items():
+            self.set_word_slow(Move(*move), word)
+
     def __getitem__(self, item):
         i, j = item
         return self.grid[i][j]
     
     def __str__(self, numbers=False):
+        self.sync()
         txt = ''
         for i in range(self.height):
             txt += '\n' + '*---' * self.width + '*\n|'
@@ -144,7 +151,7 @@ class Crosswords:
             if n == curr_n:
                 return i, j
 
-    def get_horizontal_word(self, i, j):
+    def get_horizontal_word_slow(self, i, j):
         '''
         return the stringe composed by adjacency cells horizontally of word started at i, j if self.grid[i][j].horizontal_number else None
         '''
@@ -153,7 +160,7 @@ class Crosswords:
             word += self.grid[i][jj].value
         return word
        
-    def get_vertical_word(self, i, j):
+    def get_vertical_word_slow(self, i, j):
         '''
         return the stringe composed by adjacency cells vertically of word started at i, j if self.grid[i][j].horizontal_number else None
         '''
@@ -161,19 +168,22 @@ class Crosswords:
         for ii in range(i, i + self.grid[i][j].vertical_length):
             word += self.grid[ii][j].value
         return word
+
+    def get_word_slow(self, move):
+        i, j, DIR = move.get_params()
+        return self.get_horizontal_word_slow(i, j) if DIR == HORIZONTAL else self.get_vertical_word_slow(i, j)
     
     def get_word(self, move):
-        i, j, DIR = move.get_params()
-        return self.get_horizontal_word(i, j) if DIR == HORIZONTAL else self.get_vertical_word(i, j)
+        return self.move_word_map[move.get_params()]
     
-    def set_horizontal_word(self, i, j, word):
+    def set_horizontal_word_slow(self, i, j, word):
         '''
         set horizontal word who started at i, j
         '''
         for jj in range(j, j + self.grid[i][j].horizontal_length):
             self.grid[i][jj].value = word[jj - j]
     
-    def set_vertical_word(self, i, j, word):
+    def set_vertical_word_slow(self, i, j, word):
         '''
         set horizontal word who started at i, j
         '''
@@ -181,23 +191,39 @@ class Crosswords:
             self.grid[ii][j].value = word[ii - i]
         return word
     
-    def set_word(self, move, word):
+    def set_word_slow(self, move, word):
         i, j, DIR = move.get_params()
         if DIR == HORIZONTAL:
-            self.set_horizontal_word(i, j, word)
+            self.set_horizontal_word_slow(i, j, word)
         elif DIR == VERTICAL:
-            self.set_vertical_word(i, j, word)
+            self.set_vertical_word_slow(i, j, word)
+
+    def set_word(self, move, word):
+        i, j, dir = move.get_params()
+        self.move_word_map[(i, j, dir)] = word
+        for cross_move in self.crosses[(i, j, dir)]:
+            I, J, DIR = cross_move.get_params()
+            k, l = abs(I-i), abs(J-j)
+            if dir == HORIZONTAL:
+                pass
+            elif dir == VERTICAL:
+                x = l
+                l = k
+                k = x
+            ch = word[l]
+            new_word = self.move_word_map[(I, J, DIR)]
+            self.move_word_map[(I, J, DIR)] = new_word[:k] + ch + new_word[k+1:]
     
-    def del_horizontal_word(self, i, j):
+    def del_horizontal_word_slow(self, i, j):
         word = ' ' * self.grid[i][j].horizontal_length
-        self.set_horizontal_word(i, j, word)
+        self.set_horizontal_word_slow(i, j, word)
        
-    def del_vertical_word(self, i, j):
+    def del_vertical_word_slow(self, i, j):
         word = ' ' * self.grid[i][j].vertical_length
-        self.set_vertical_word(i, j, word)
+        self.set_vertical_word_slow(i, j, word)
         
-    def find_possible_horizontal_words(self, dictionary, i, j, optimize=False):
-        pattern = self.get_horizontal_word(i, j).replace(' ', '.')
+    def find_possible_horizontal_words_slow(self, dictionary, i, j, optimize=False):
+        pattern = self.get_horizontal_word_slow(i, j).replace(' ', '.')
         res = []
         
         # Precompilare il pattern per evitare di compilarlo ad ogni iterazione
@@ -214,17 +240,8 @@ class Crosswords:
                 res.append(word)
         return res
     
-    '''def find_possible_vertical_words(self, dictionary, i, j, optimize=False):
-        pattern = self.get_vertical_word(i, j).replace(' ', '.')
-        res = []
-        iterable = dictionary.keys() if not optimize else dictionary[len(pattern)]
-        for word in iterable:
-            if re.fullmatch(pattern, word):
-                res.append(word)
-        return res'''
-    
-    def find_possible_vertical_words(self, dictionary, i, j, optimize=False):
-        pattern = self.get_vertical_word(i, j).replace(' ', '.')
+    def find_possible_vertical_words_slow(self, dictionary, i, j, optimize=False):
+        pattern = self.get_vertical_word_slow(i, j).replace(' ', '.')
         res = []
         
         # Precompilare il pattern per evitare di compilarlo ad ogni iterazione
@@ -237,12 +254,24 @@ class Crosswords:
                 res.append(word)
         return res
     
-    def find_possible_words(self, dictionary, move, optimize=False):
+    def find_possible_words_slow(self, dictionary, move, optimize=False):
         i, j, DIR = move.get_params()
         if DIR == HORIZONTAL:
-            return self.find_possible_horizontal_words(dictionary, i, j, optimize)
+            return self.find_possible_horizontal_words_slow(dictionary, i, j, optimize)
         elif DIR == VERTICAL:
-            return self.find_possible_vertical_words(dictionary, i, j, optimize)
+            return self.find_possible_vertical_words_slow(dictionary, i, j, optimize)
+
+    def find_possible_words(self, dictionary, move, optimize=False):
+        pattern = self.get_word(move).replace(' ', '.')
+        res = []
+        # Precompilare il pattern per evitare di compilarlo ad ogni iterazione
+        pattern_re = re.compile(pattern)
+        # Usare una struttura dati più efficiente per la ricerca (es. set)
+        iterable = dictionary.keys() if not optimize else dictionary[len(pattern)]
+        for word in iterable:
+            if pattern_re.fullmatch(word):
+                res.append(word)
+        return res
 
     def get_horizontal_cross_moves(self, i, j):
         positions = [(i, j + jj) for jj in range(self.grid[i][j].horizontal_length)]
@@ -299,6 +328,9 @@ class Crosswords:
             if self.grid[ii][j].value == ' ' and not self.grid[i][j].is_black:
                 return False
         return True
+
+    def is_completed_word(self, move):
+        return not '.' in self.move_word_map[move.get_params()]
     
     def fill_random(self):
        for i in range(self.height):
@@ -334,7 +366,6 @@ class Crosswords:
     
 if __name__ == "__main__":
     crossword = Crosswords(5, 5, [(4, 0), (3, 1), (2, 2), (1, 3), (0, 4)])
-    crossword.set_horizontal_word(0, 0, 'CIAO')
     print(crossword)
     print(crossword.__str__(numbers=True))
     crossword.fill_random()
