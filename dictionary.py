@@ -1,4 +1,4 @@
-'''import json
+import json
 from random import sample
 
 print(">> Loading Dictionary")
@@ -13,11 +13,12 @@ dictionary = {item['word']: sample(item['definitions'], 1)[0] for item in full_d
 print("Founded dictionary with %d words. \nHead:" % len(dictionary))
 for i, (word, definition) in enumerate(dictionary.items()):
     if i < 20:
-        print("    %s: %s" % (word, definition))'''
-with open("dict_test.txt", "r") as file:
+        print("    %s: %s" % (word, definition))
+
+'''with open("dict_test.txt", "r") as file:
     words = file.readlines()
 
 words = {word for word in words}
 dictionary = {word[:-1].upper(): "definizione a caso" for word in words}
-length = [len(word[-1]) for word in words]
+length = [len(word[-1]) for word in words]'''
 
