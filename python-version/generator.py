@@ -1,11 +1,18 @@
 from random import shuffle
-from crosswords import Move, Crosswords, HORIZONTAL, VERTICAL
+from crosswords import Crosswords, HORIZONTAL, VERTICAL
 from dictionary import get_dictionary
 from tree import Tree
 from time import time
+import re
 import os
 
 SLOW = False
+
+def matches_pattern(word, pattern):
+    for wp, pp in zip(word, pattern):
+        if pp != '.' and wp != pp:
+            return False
+    return True
 
 def clear_console():
     # Imposta la variabile TERM se non è già impostata
@@ -27,9 +34,9 @@ class Generator:
         self.moves = []
         for i, j in self.crossword.numbers_list:
             if self.crossword[i, j].horizontal_length > 0:
-                self.moves.append(Move(i, j, HORIZONTAL))
+                self.moves.append((i, j, HORIZONTAL))
             if self.crossword[i, j].vertical_length > 0:
-                self.moves.append(Move(i, j, VERTICAL))
+                self.moves.append((i, j, VERTICAL))
         self.moves.sort(key=lambda x: len(self.crossword.get_word(x)))
         self.cache = dict()
         self.back_jump = back_jump
@@ -50,7 +57,7 @@ class Generator:
         res = dict()
         lengths = set()
         for move in self.moves:
-            lengths.add(len(self.crossword.move_word_map[move.get_params()]))
+            lengths.add(len(self.crossword.move_word_map[move]))
         for word in self.dictionary.keys():
             n = len(word)
             if n in lengths:
@@ -63,14 +70,23 @@ class Generator:
                 raise ValueError("Non ci sono parole lunghe %d" % length)
         return res
 
+    def find_possible_words(self, pattern):
+        pattern_re = re.compile(pattern)
+        res = []
+        for word in self.optimized_dictionary[len(pattern)]:
+            #if matches_pattern(word, pattern):
+            if pattern_re.fullmatch(word):
+                res.append(word)
+        return res
+
     def get_score(self, move, word):
         res = 1
         pattern = self.crossword.get_word(move)
         self.crossword.set_word(move, word)
-        for m in self.crossword.crosses[move.get_params()]:
+        for m in self.crossword.crosses[move]:
             cross_pattern = self.crossword.get_word(m)
             if not cross_pattern in self.cache:
-                self.cache[cross_pattern] = self.crossword.find_possible_words(self.optimized_dictionary, m, optimize=True)
+                self.cache[cross_pattern] = self.find_possible_words(cross_pattern)
                 self.CACHE_WORDS += len(self.cache[cross_pattern])
             else:
                 self.CACHE_ACCESSES += 1
@@ -118,7 +134,7 @@ class Generator:
             self.CACHE_ACCESSES += 1
             words = self.cache[pattern]
         else:
-            words = self.crossword.find_possible_words(self.optimized_dictionary, move, optimize=True)
+            words = self.find_possible_words(pattern)
             self.cache[pattern] = words
             self.CACHE_WORDS += len(words)
         if len(words) == 0:
@@ -137,7 +153,7 @@ class Generator:
                 self.crossword.set_word(move, word)
                 node = Tree(content=(move, word))
                 tree.add_son(node)
-                found_solution, children_move = self.visit_rec(node)
+                found_solution, children_move = self.visit_rec(node, profile_stop)
                 if found_solution:
                     break
         self.LEAVES += 1 * is_leave
@@ -170,5 +186,5 @@ if __name__ == "__main__":
                             (5, 7), (5, 11), (6, 0), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 5)])
     print(crossword.__str__(numbers=True))
     generator = Generator(crossword, dictionary=get_dictionary(test=False, n_words=16000), back_jump=False)
-    print(generator.visit(profile_stop=-1))
+    print(generator.visit(profile_stop=5000))
 
