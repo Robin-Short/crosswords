@@ -6,7 +6,7 @@ from time import time
 import re
 import os
 
-SLOW = False
+SLOW = True
 
 def matches_pattern(word, pattern):
     for wp, pp in zip(word, pattern):
@@ -102,10 +102,10 @@ class Generator:
         words.sort(key=lambda x: scores[x], reverse=reverse)
         return scores
 
-    def visit_rec(self, tree, profile_stop=-1):
+    def visit_rec(self, tree, profile_stop=-1, observe=float('inf')):
         if self.VISITS == profile_stop:
             return True, None
-        if self.VISITS % 1000 == 0:
+        if self.VISITS % observe == 0:
             #self.save_tree()
             #clear_console()
             print(self.crossword)
@@ -152,7 +152,7 @@ class Generator:
                 self.crossword.set_word(move, word)
                 node = Tree(content=(move, word))
                 tree.add_son(node)
-                found_solution, children_move = self.visit_rec(node, profile_stop)
+                found_solution, children_move = self.visit_rec(node, profile_stop, observe=observe)
                 if found_solution:
                     break
         self.LEAVES += 1 * is_leave
@@ -163,9 +163,9 @@ class Generator:
             self.crossword.set_word(move, pattern)
             return False, None
 
-    def visit(self, profile_stop=-1):
+    def visit(self, profile_stop=-1, observe=float('inf')):
         self.START_TIME = time()
-        res = self.visit_rec(self.tree, profile_stop=profile_stop)
+        res = self.visit_rec(self.tree, profile_stop=profile_stop, observe=observe)
         self.save_tree()
         print()
         print("Visite:      ", self.VISITS)
@@ -185,5 +185,6 @@ if __name__ == "__main__":
                             (5, 7), (5, 11), (6, 0), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 5)])
     print(crossword.__str__(numbers=True))
     generator = Generator(crossword, dictionary=get_dictionary(test=True, n_words=3003))
-    print(generator.visit(profile_stop=5000))
+    print(generator.visit(profile_stop=5000, observe=1))
+
 
