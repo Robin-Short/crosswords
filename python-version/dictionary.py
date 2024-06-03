@@ -24,12 +24,20 @@ def get_dictionary(test=TEST, n_words=N_WORDS, random=False, origin_file='../wor
     file_test = origin_file
     dict_full = load_dict(file_full, random=random and not test)
     dict_test = load_dict(file_test, random=random and not test)
+    n = len(dict_test)
     if test:
+        dictionary_list = list()
         for i, (word, definition) in enumerate(dict_full.items()):
-            if i >= n_words:
+            if i >= n_words - n:
                 break
-            dict_test[word] = definition
-        dictionary = dict_test
+            dictionary_list.append((word, definition))
+        for i, (word, definition) in enumerate(dict_test.items()):
+            if i >= n:
+                break
+            dictionary_list.append((word, definition))
+        if random and not test:
+            shuffle(dictionary_list)
+        dictionary = {x[0]: x[1] for x in dictionary_list}
     else:
         dictionary = dict_full
     return dictionary

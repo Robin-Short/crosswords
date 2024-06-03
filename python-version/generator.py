@@ -6,7 +6,7 @@ from time import time
 import re
 import os
 
-SLOW = True
+SLOW = False
 
 def matches_pattern(word, pattern):
     for wp, pp in zip(word, pattern):
@@ -96,15 +96,17 @@ class Generator:
         return res
 
     def sort_by_score(self, move, words, reverse=True):
-        scores = dict()
+        scores = list()
         for word in words:
-            scores[word] = self.get_score(move, word)
-        words.sort(key=lambda x: scores[x], reverse=reverse)
+            scores.append((word, self.get_score(move, word)))
+        #scores.sort(key=lambda x: x[1], reverse=reverse)
         return scores
 
     def visit_rec(self, tree, profile_stop=-1, observe=float('inf')):
+        if self.VISITS == 1055:
+            pass
         if self.VISITS == profile_stop:
-            return True, None
+            return True
         if self.VISITS % observe == 0:
             #self.save_tree()
             #clear_console()
@@ -122,7 +124,7 @@ class Generator:
             print(str(self.crossword))
             self.crossword.show(self.dictionary)
             self.LEAVES += 1
-            return True, None
+            return True
         #shuffle(self.moves)
         move = self.moves.pop()
         pattern = self.crossword.get_word(move)
@@ -142,26 +144,26 @@ class Generator:
             if SLOW:
                 input("Back Jump begin: continue?")
             self.LEAVES += 1
-            return False, move
+            return False
         found_solution = False
-        scores = self.sort_by_score(move, words, reverse=False)
+        scores = self.sort_by_score(move, words, reverse=True)
         is_leave = True
-        for word in words:
-            if scores[word] != 0:
+        for (word, score) in scores:
+            if score != 0:
                 is_leave = False
                 self.crossword.set_word(move, word)
                 node = Tree(content=(move, word))
                 tree.add_son(node)
-                found_solution, children_move = self.visit_rec(node, profile_stop, observe=observe)
+                found_solution = self.visit_rec(node, profile_stop, observe=observe)
                 if found_solution:
                     break
         self.LEAVES += 1 * is_leave
         self.moves.append(move)
         if found_solution:
-            return True, None
+            return True
         else:
             self.crossword.set_word(move, pattern)
-            return False, None
+            return False
 
     def visit(self, profile_stop=-1, observe=float('inf')):
         self.START_TIME = time()
@@ -177,14 +179,14 @@ class Generator:
         print(generator.crossword.move_word_map)
         return res
 
-
-
 if __name__ == "__main__":
     crossword = Crosswords(12, 8,
                            [(0, 5), (0, 7), (0, 9), (1, 2), (1, 4), (1, 2), (1, 4), (2, 3), (3, 1), (4, 0), (4, 11),
                             (5, 7), (5, 11), (6, 0), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 5)])
     print(crossword.__str__(numbers=True))
-    generator = Generator(crossword, dictionary=get_dictionary(test=True, n_words=3003))
-    print(generator.visit(profile_stop=5000, observe=1))
+    dictionary = get_dictionary(test=True, n_words=4230, random=False)
+    generator = Generator(crossword, dictionary=dictionary)
+    print(generator.visit(profile_stop=-1, observe=500))
+
 
 
