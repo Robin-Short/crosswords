@@ -28,7 +28,7 @@ def clear_console():
 
 
 class Generator:
-    def __init__(self, crossword, dictionary, back_jump=False):
+    def __init__(self, crossword, dictionary):
         self.crossword = crossword
         self.dictionary = dictionary
         self.moves = []
@@ -37,9 +37,8 @@ class Generator:
                 self.moves.append((i, j, HORIZONTAL))
             if self.crossword[i, j].vertical_length > 0:
                 self.moves.append((i, j, VERTICAL))
-        self.moves.sort(key=lambda x: len(self.crossword.get_word(x)))
+        self.moves.sort(key=lambda x: 100 * x[2] + len(self.crossword.get_word(x)))
         self.cache = dict()
-        self.back_jump = back_jump
         self.optimized_dictionary = self.get_optimized_dictionary()
         self.tree = Tree(content=(None, None))
         # CONTROL PARAMETERS
@@ -145,7 +144,7 @@ class Generator:
             self.LEAVES += 1
             return False, move
         found_solution = False
-        scores = self.sort_by_score(move, words)
+        scores = self.sort_by_score(move, words, reverse=False)
         is_leave = True
         for word in words:
             if scores[word] != 0:
@@ -185,6 +184,6 @@ if __name__ == "__main__":
                            [(0, 5), (0, 7), (0, 9), (1, 2), (1, 4), (1, 2), (1, 4), (2, 3), (3, 1), (4, 0), (4, 11),
                             (5, 7), (5, 11), (6, 0), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 5)])
     print(crossword.__str__(numbers=True))
-    generator = Generator(crossword, dictionary=get_dictionary(test=False, n_words=16000), back_jump=False)
+    generator = Generator(crossword, dictionary=get_dictionary(test=True, n_words=3003))
     print(generator.visit(profile_stop=5000))
 
