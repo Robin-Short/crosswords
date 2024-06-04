@@ -37,7 +37,17 @@ class Generator:
                 self.moves.append((i, j, HORIZONTAL))
             if self.crossword[i, j].vertical_length > 0:
                 self.moves.append((i, j, VERTICAL))
-        self.moves.sort(key=lambda x: 100 * x[2] + len(self.crossword.get_word(x)))
+        self.sort_criterya = {
+            "long_column_first": lambda x: 100 * x[2] + len(self.crossword.get_word(x)),
+            "long_rows_first": lambda x: 100 * (1 - x[2]) + len(self.crossword.get_word(x)),
+            "short_column_first": lambda x: 100 * x[2] - len(self.crossword.get_word(x)),
+            "short_rows_first": lambda x: 100 * (1 - x[2]) - len(self.crossword.get_word(x)),
+            "long_first": lambda x: len(self.crossword.get_word(x)),
+            "short_first": lambda x: 100 - len(self.crossword.get_word(x)),
+            "more_intersections_first": lambda x: len(self.crossword.crosses[x]),
+            "less_intersection_first": lambda x: 100 - len(self.crossword.crosses[x])
+        }
+        self.moves.sort(key=self.sort_criterya["long_column_first"])
         self.cache = dict()
         self.optimized_dictionary = self.get_optimized_dictionary()
         self.tree = Tree(content=(None, None))
