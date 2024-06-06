@@ -47,7 +47,7 @@ class Generator:
             "more_intersections_first": lambda x: len(self.crossword.crosses[x]),
             "less_intersection_first": lambda x: 100 - len(self.crossword.crosses[x])
         }
-        self.moves.sort(key=self.sort_criterya["long_column_first"])
+        self.moves.sort(key=self.sort_criterya["long_first"])
         self.cache = dict()
         self.optimized_dictionary = self.get_optimized_dictionary()
         self.tree = Tree(content=(None, None))
@@ -81,8 +81,9 @@ class Generator:
 
     def find_possible_words(self, pattern):
         pattern_re = re.compile(pattern)
-        res = []
-        for word in self.optimized_dictionary[len(pattern)]:
+        res, n  = [], len(pattern)
+        iterable = self.optimized_dictionary[n]
+        for word in iterable:
             #if matches_pattern(word, pattern):
             if pattern_re.fullmatch(word):
                 res.append(word)
@@ -109,7 +110,7 @@ class Generator:
         scores = list()
         for word in words:
             scores.append((word, self.get_score(move, word)))
-        #scores.sort(key=lambda x: x[1], reverse=reverse)
+        scores.sort(key=lambda x: x[1], reverse=reverse)
         return scores
 
     def visit_rec(self, tree, profile_stop=-1, observe=float('inf')):
@@ -190,13 +191,45 @@ class Generator:
         return res
 
 if __name__ == "__main__":
-    crossword = Crosswords(12, 8,
+    '''crossword = Crosswords(12, 8,
                            [(0, 5), (0, 7), (0, 9), (1, 2), (1, 4), (1, 2), (1, 4), (2, 3), (3, 1), (4, 0), (4, 11),
-                            (5, 7), (5, 11), (6, 0), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 5)])
+                            (5, 7), (5, 11), (6, 0), (6, 8), (6, 9), (7, 0), (7, 1), (7, 2), (7, 5)])'''
+    crossword = Crosswords(4, 4, [])
+    '''[(0, 4), (0, 10),
+    (1, 4), (1, 10),
+    (3, 3), (3, 7),
+    (4, 6), (4, 12), (4, 13), (4, 14),
+    (5, 0), (5, 1), (5, 5), (5, 9),
+    (6, 4),
+    (7, 3), (7, 11),
+    (8, 10),
+    (9, 5), (9, 9), (9, 13), (9, 14),
+    (10, 0), (10, 1), (10, 2), (10, 8),
+    (11, 7), (11, 11),
+    (13, 4), (13, 10),
+    (14, 4), (14, 10),
+    ])'''
+   # crossword.set_word((0, 0, 0), "CASA")
+   # crossword.set_word((0, 5, 0), "CAPRA")
+   # crossword.set_word((0, 0, 1), "CAMPO")
+   # crossword.set_word((2, 0, 0), "MADAMABUTTERFLY")
+    #crossword.set_word((1, 11, 0), "BELA")
+   # crossword.set_word((3, 8, 0), "CAPRAIA")
+   # crossword.set_word((5, 2, 0), "TRE")
+   # crossword.set_word((3, 8, 0), "CAPRAIA")
+   # crossword.set_word((6, 0, 0), "TORO")
+   # crossword.set_word((7, 12, 0), "CAPRAIA")
+   ## crossword.set_word((8, 0, 0), "PIANOFORTE")
+    #crossword.set_word((9, 10, 0), "SOS")
+   # crossword.set_word((10, 9, 0), "TEATRO")
+    #crossword.set_word((11, 0, 0), "PERLATO")
+    #crossword.set_word((13, 0, 0), "VASO")
+   ## crossword.set_word((14, 11, 0), "ORZO")
+
     print(crossword.__str__(numbers=True))
-    dictionary = get_dictionary(test=True, n_words=4230, random=False)
+    dictionary = get_dictionary(test=False, n_words=4230, random=False)
     generator = Generator(crossword, dictionary=dictionary)
-    print(generator.visit(profile_stop=-1, observe=500))
+    print(generator.visit(profile_stop=-2000, observe=100))
 
 
 

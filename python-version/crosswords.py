@@ -193,18 +193,19 @@ class Crosswords:
         elif DIR == VERTICAL:
             self.set_vertical_word_grid(i, j, word)
 
-    def set_word(self, move, word):
+    def set_word(self, move, word, consistency=True):
         self.move_word_map[move] = word
-        for cross_move in self.crosses[move]:
-            k, l = self.intersections[(move, cross_move)]
-            ch = word[l]
-            new_word = self.move_word_map[cross_move]
-            self.move_word_map[cross_move] = new_word[:k] + ch + new_word[k+1:]
+        if consistency:
+            for cross_move in self.crosses[move]:
+                k, l = self.intersections[(move, cross_move)]
+                ch = word[l]
+                new_word = self.move_word_map[cross_move]
+                self.move_word_map[cross_move] = new_word[:k] + ch + new_word[k+1:]
         
-    def del_word(self, move):
+    def del_word(self, move, consistency=True):
         i, j, DIR = move
         word = '.' * (self.grid[i][j].horizontal_length if DIR == HORIZONTAL else self.grid[i][j].vertical_length)
-        self.set_word(move, word)
+        self.set_word(move, word, consistency)
 
     def get_horizontal_cross_moves(self, i, j):
         positions = [(i, j + jj) for jj in range(self.grid[i][j].horizontal_length)]
